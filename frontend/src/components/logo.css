@@ -1,0 +1,219 @@
+/* ---- FTY cinematic login: full-bleed animation + glass dock ---- */
+.login-scene {
+  margin: 0;
+  min-height: 100vh;
+  background: #050510;
+  overflow: hidden;
+}
+
+.fty-stage {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 48px 16px 56px;
+  overflow: hidden;
+}
+
+/* DaVinci-style blockbuster grade: deep indigo shadows, warm gold souls */
+.fty-grade {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(900px 480px at 50% 0%, rgba(79, 70, 229, 0.28), transparent 62%),
+    radial-gradient(1200px 700px at 50% 42%, rgba(49, 46, 129, 0.55), transparent 70%),
+    linear-gradient(180deg, #0c0c20 0%, #070714 48%, #050510 100%);
+}
+@keyframes fty-spin { to { transform: rotate(360deg); } }
+
+/* Film grain + vignette for the celluloid finish */
+.fty-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='160' height='160' filter='url(%23n)' opacity='0.6'/></svg>");
+  pointer-events: none;
+}
+.fty-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+  pointer-events: none;
+}
+
+/* Hero: emblem + caption, systematically centered above the login dock */
+.fty-hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  z-index: 1;
+}
+.fty-emblem-wrap {
+  position: relative;
+  width: min(34vmin, 250px);
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fty-enter 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Breathing halo behind the emblem */
+.fty-glow {
+  position: absolute;
+  inset: -22%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(129, 140, 248, 0.38) 0%, rgba(79, 70, 229, 0.14) 45%, transparent 70%);
+  animation: fty-breathe 5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes fty-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+
+/* Orbit rings removed — only the emblem itself spins */
+
+/* The emblem rotates continuously; entrance lives on the wrapper */
+.fty-emblem {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  animation: fty-spin 36s linear infinite;
+}
+@keyframes fty-enter {
+  from { transform: scale(0.55) rotate(-40deg); opacity: 0; filter: blur(14px); }
+  60% { opacity: 1; filter: blur(0); }
+  to { transform: scale(1) rotate(0deg); opacity: 1; filter: blur(0); }
+}
+
+.fty-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  /* Black artwork -> glowing white */
+  filter: invert(1) brightness(1.06) drop-shadow(0 0 22px rgba(199, 210, 254, 0.55)) drop-shadow(0 6px 30px rgba(0, 0, 0, 0.6));
+  user-select: none;
+}
+
+/* Caption: classical serif title card */
+.fty-caption {
+  display: flex;
+  gap: 7px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 700;
+  letter-spacing: 7px;
+  color: #eef0ff;
+  font-size: clamp(13px, 2.2vmin, 18px);
+  text-shadow: 0 0 18px rgba(129, 140, 248, 0.7);
+}
+.fty-caption span {
+  display: inline-block;
+  opacity: 0;
+  animation: fty-rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes fty-rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Glass login dock: rhymes with the animation ---- */
+.login-glass {
+  position: relative;
+  z-index: 1;
+  width: min(420px, 94vw);
+  padding: 28px 28px 22px;
+  border-radius: 18px;
+  background: linear-gradient(160deg, rgba(24, 24, 48, 0.72), rgba(10, 10, 24, 0.66));
+  border: 1px solid rgba(199, 210, 254, 0.20);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 0, 0, 0.3), 0 0 44px rgba(79, 70, 229, 0.25);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  color: #eef0ff;
+  animation: fty-dock-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
+}
+@keyframes fty-dock-in {
+  from { opacity: 0; transform: translateY(26px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.login-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  border-radius: 18px 18px 0 0;
+  background: linear-gradient(90deg, transparent, rgba(199, 210, 254, 0.9), transparent);
+}
+.login-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.login-glass h2 { margin: 0 0 4px; font-size: 22px; }
+.g-sub { margin: 0 0 16px; font-size: 13px; color: #a5b4fc; }
+.g-label { display: block; font-size: 12px; color: #c7d2fe; margin: 0 0 6px; letter-spacing: 0.4px; }
+.g-input {
+  width: 100%;
+  border: 1px solid rgba(199, 210, 254, 0.22);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #f4f5ff;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.g-input::placeholder { color: #6b7194; }
+.g-input:focus {
+  outline: none;
+  border-color: #818cf8;
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.35), 0 0 18px rgba(99, 102, 241, 0.35);
+}
+.g-btn {
+  width: 100%;
+  margin-top: 16px;
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(100deg, #4f46e5 0%, #7c3aed 100%);
+  box-shadow: 0 10px 28px rgba(79, 70, 229, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition: transform 0.15s, box-shadow 0.2s, filter 0.2s;
+}
+.g-btn:hover:not(:disabled) { filter: brightness(1.1); box-shadow: 0 12px 34px rgba(124, 58, 237, 0.6); }
+.g-btn:active:not(:disabled) { transform: translateY(1px); }
+.g-btn:disabled { opacity: 0.65; cursor: wait; }
+.g-error {
+  background: rgba(220, 38, 38, 0.14);
+  border: 1px solid rgba(248, 113, 113, 0.5);
+  color: #fecaca;
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+.g-hint { font-size: 12px; color: #8b90b3; margin: 14px 0 0; line-height: 1.5; }
+.g-hint b { color: #e0e7ff; }
+.fty-foot { position: relative; z-index: 1; margin: 0; font-size: 12px; letter-spacing: 2px; color: rgba(165, 180, 252, 0.55); }
+
+/* Legacy light side (unused by new login, kept for safety) */
+.login-side { display: none; }
+.login-wrap { display: flex; align-items: center; justify-content: center; height: 100%; }
+.login-wrap .login-card { width: 360px; }
+
+@media (max-height: 760px) {
+  .fty-stage { gap: 14px; padding: 28px 16px 36px; }
+  .fty-emblem-wrap { width: min(26vmin, 180px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fty-emblem, .fty-emblem-wrap, .fty-glow, .fty-caption span, .login-glass {
+    animation: none;
+  }
+  .fty-caption span, .login-glass { opacity: 1; }
+}
