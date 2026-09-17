@@ -243,4 +243,4 @@ scripts/ setup.ps1, start-dev.ps1, reset-dev.ps1, isolate-logo.py
 
 ---
 
-Built for WAIT Technologies · FTY HelpDesk — “Support that moves at the speed of youth.”
+Built from WAIT Technologies · FTY HelpDesk — “Support that moves at the speed of youth.”
