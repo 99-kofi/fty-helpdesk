@@ -24,7 +24,8 @@ export function useInboxSocket(activeId: number | null, onEvent: () => void) {
     };
 
     try {
-      ws = new WebSocket(`ws://${location.hostname}:8000/ws/inbox`);
+      const wsProtocol = location.protocol === 'https:' ? 'wss' : 'ws';
+      ws = new WebSocket(`${wsProtocol}://${location.host}/ws/inbox`);
       ws.onopen = () => !closed && setLive(true);
       ws.onmessage = fire;
       ws.onclose = () => !closed && setLive(false);

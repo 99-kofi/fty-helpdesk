@@ -3,7 +3,7 @@
 $ErrorActionPreference = "Stop"
 
 # Backend: uvicorn with reload (http://localhost:8000/docs)
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot\..\\backend'; ..\\.venv\\Scripts\\Activate.ps1; uvicorn app.main:app --reload --port 8000"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot\..\\backend'; .\\.venv\\Scripts\\Activate.ps1; uvicorn app.main:app --reload --port 8000"
 
 # Frontend: vite dev server (http://localhost:5173)
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot\..\\frontend'; npm run dev"
