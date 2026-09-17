@@ -9,14 +9,15 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const nav = useNavigate();
 
+  const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') || '';
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
     try {
-      await fetch('/api/v1/auth/seed-admin', { method: 'POST' });
+      await fetch(`${API_BASE}/api/v1/auth/seed-admin`, { method: 'POST' });
       const form = new URLSearchParams({ username: email, password });
-      const res = await fetch('/api/v1/auth/login', {
+      const res = await fetch(`${API_BASE}/api/v1/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: form,

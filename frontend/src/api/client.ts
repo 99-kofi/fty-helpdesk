@@ -6,7 +6,8 @@ export class ApiError extends Error {
   }
 }
 
-const API = '/api/v1';
+const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') || '';
+const API = `${API_BASE}/api/v1`;
 
 function authHeaders(): HeadersInit {
   const t = localStorage.getItem('fty_token');
