@@ -207,9 +207,12 @@ Vercel runs the FastAPI service as a serverless function, so it needs a managed 
    FRONTEND_URL=https://<your-project>.vercel.app
    CORS_ORIGINS=["https://<your-project>.vercel.app"]
    ALLOW_DEFAULT_ADMIN_BOOTSTRAP=false
+   BOOTSTRAP_ADMIN_NAME=Administrator
+   BOOTSTRAP_ADMIN_EMAIL=<your-admin-email>
+   BOOTSTRAP_ADMIN_PASSWORD=<long-unique-password>
    ```
 
-   Add the Meta, WhatsApp, SMTP, storage, and Redis values only when those integrations are enabled. Do not set the development `admin123` bootstrap switch in Vercel.
+   Add the Meta, WhatsApp, SMTP, storage, and Redis values only when those integrations are enabled. Do not set the development `admin123` bootstrap switch in Vercel. The deployment creates the administrator only when the database is empty; remove the three `BOOTSTRAP_ADMIN_*` values after the first successful login.
 4. Deploy. Check `https://<your-project>.vercel.app/health`; it should return `{"status":"ok","service":"fty-helpdesk"}`. The frontend and API share the same origin, so no `VITE_API_URL` is necessary.
 
 The dashboard's live socket uses its existing polling fallback on Vercel. For SLA checks, call `POST /api/v1/automation/sla-check` from one external scheduler; serverless instances must not each run their own watchdog.

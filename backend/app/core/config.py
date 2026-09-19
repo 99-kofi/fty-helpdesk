@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     # The predictable local administrator must never be creatable on a deployed app.
     # setup.ps1 enables this only in the generated local backend/.env.
     allow_default_admin_bootstrap: bool = False
+    bootstrap_admin_name: str = "Administrator"
+    bootstrap_admin_email: str = ""
+    bootstrap_admin_password: str = ""
 
     meta_verify_token: str = "change-me"
     meta_app_secret: str = "change-me"
@@ -99,6 +102,10 @@ class Settings(BaseSettings):
             raise ValueError(
                 "DATABASE_URL (or POSTGRES_URL) must point to managed PostgreSQL on Vercel; "
                 "SQLite is not persistent in Vercel Functions."
+            )
+        if bool(self.bootstrap_admin_email) != bool(self.bootstrap_admin_password):
+            raise ValueError(
+                "BOOTSTRAP_ADMIN_EMAIL and BOOTSTRAP_ADMIN_PASSWORD must be set together."
             )
         return self
 

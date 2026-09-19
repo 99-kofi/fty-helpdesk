@@ -37,6 +37,38 @@ def ensure_schema() -> None:
 
 ensure_schema()
 
+
+def bootstrap_production_admin() -> None:
+    """Create the first administrator from deployment secrets, never from a route."""
+    if not (settings.bootstrap_admin_email and settings.bootstrap_admin_password):
+        return
+    from sqlalchemy.exc import IntegrityError
+    from app.core.database import SessionLocal
+    from app.core.security import hash_password
+    from app.models.user import User
+
+    db = SessionLocal()
+    try:
+        if db.query(User.id).first():
+            return
+        db.add(User(
+            name=settings.bootstrap_admin_name,
+            email=settings.bootstrap_admin_email,
+            password_hash=hash_password(settings.bootstrap_admin_password),
+            role="admin",
+        ))
+        db.commit()
+        log.info("Created the initial administrator from deployment configuration")
+    except IntegrityError:
+        # Concurrent cold starts can race; the unique email constraint makes the
+        # losing request harmless.
+        db.rollback()
+    finally:
+        db.close()
+
+
+bootstrap_production_admin()
+
 _scheduler = None
 
 
