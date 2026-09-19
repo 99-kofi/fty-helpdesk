@@ -120,9 +120,13 @@ app.add_middleware(
 
 app.include_router(api_router, prefix="/api/v1")
 app.include_router(webhook_router, prefix="/webhooks")
+# Vercel: top-level routes must also be reachable under /api (function at /api)
+app.include_router(webhook_router, prefix="/api/webhooks")
 app.include_router(ws_router)
+app.include_router(ws_router, prefix="/api")
 
 
 @app.get("/health")
+@app.get("/api/health")
 def health():
     return {"status": "ok", "service": "fty-helpdesk"}
