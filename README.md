@@ -196,8 +196,8 @@ npm run build
 
 This Vercel configuration deploys the React frontend only. All application data is stored in the signed-in browser's `localStorage`; no database, API environment variables, or server function is deployed.
 
-1. Import `99-kofi/fty-helpdesk` in Vercel and leave the project root at the repository root.
-2. Deploy with the repository's `vercel.json`. Do not set `VITE_API_URL`.
+1. Import `99-kofi/fty-helpdesk` in Vercel. In **Project Settings → General → Root Directory**, set the directory to **`frontend`** and save. This is required: it prevents Vercel from discovering the repository's Python API.
+2. Redeploy using `frontend/vercel.json`. Do not set `VITE_API_URL`.
 3. Open `https://<your-project>.vercel.app` and log in with **`admin@fty.local` / `admin123`**. Change or create local worker logins from Settings.
 
 The app is fully browser-local: clearing browser site data clears the helpdesk data; data does not sync across browsers, devices, or team members; channel webhooks, OAuth, outbound email, and live shared inbox features require a separately hosted backend and are intentionally unavailable in this deployment.
