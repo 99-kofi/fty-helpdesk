@@ -1,17 +1,17 @@
 {
-  "version": 2,
-  "builds": [
-    { "src": "api/index.py", "use": "@vercel/python" },
-    { "src": "frontend/package.json", "use": "@vercel/static-build", "config": { "distDir": "dist" } }
-  ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "api/index.py" },
-    { "src": "/webhooks/(.*)", "dest": "api/index.py" },
-    { "src": "/ws/(.*)", "dest": "api/index.py" },
-    { "src": "/health", "dest": "api/index.py" },
-    { "src": "/(.*)", "dest": "frontend/dist/$1" }
-  ],
-  "env": {
-    "PYTHONPATH": "backend"
-  }
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/dist",
+  "installCommand": "pip install -r api/requirements.txt && cd frontend && npm install",
+  "functions": {
+    "api/index.py": {
+      "runtime": "python3.11",
+      "includeFiles": "backend/**"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index.py" },
+    { "source": "/webhooks/(.*)", "destination": "/api/index.py" },
+    { "source": "/ws/(.*)", "destination": "/api/index.py" },
+    { "source": "/health", "destination": "/api/index.py" }
+  ]
 }
