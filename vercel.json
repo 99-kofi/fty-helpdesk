@@ -10,6 +10,8 @@
     { "src": "/webhooks/(.*)", "dest": "/api/index.py" },
     { "src": "/ws/(.*)", "dest": "/api/index.py" },
     { "src": "/assets/(.*)", "dest": "/frontend/assets/$1" },
+    { "src": "/fty-logo.png", "dest": "/frontend/fty-logo.png" },
+    { "src": "/vite.svg", "dest": "/frontend/vite.svg" },
     { "src": "/(.*)", "dest": "/frontend/index.html" }
   ]
 }
