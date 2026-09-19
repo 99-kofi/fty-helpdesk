@@ -194,13 +194,14 @@ npm run build
 
 ## 11) Deploy on Vercel
 
-This Vercel configuration deploys the React frontend only. All application data is stored in the signed-in browser's `localStorage`; no database, API environment variables, or server function is deployed.
+This deployment serves the React frontend and FastAPI backend from one Vercel project, with shared data stored in Neon PostgreSQL.
 
-1. Import `99-kofi/fty-helpdesk` in Vercel. In **Project Settings → General → Root Directory**, set the directory to **`frontend`** and save. This is required: it prevents Vercel from discovering the repository's Python API.
-2. Redeploy using `frontend/vercel.json`. Do not set `VITE_API_URL`.
-3. Open `https://<your-project>.vercel.app` and log in with **`admin@fty.local` / `admin123`**. Change or create local worker logins from Settings.
+1. In **Project Settings → General → Root Directory**, clear the setting so Vercel uses the repository root. Do not use `frontend` as the Root Directory.
+2. Confirm the Neon integration provides `POSTGRES_URL`, or set `DATABASE_URL` to Neon’s pooled connection URL. Do not leave `DATABASE_URL` as an empty string.
+3. Set `JWT_SECRET`, `TOKEN_ENCRYPTION_KEY`, `FRONTEND_URL=https://fty-helpdesk.vercel.app`, `CORS_ORIGINS=["https://fty-helpdesk.vercel.app"]`, and all three `BOOTSTRAP_ADMIN_*` values in Vercel Production environment variables.
+4. Leave `VITE_STORAGE_MODE` unset (or set it to `remote`) and redeploy. Log in using the bootstrap credentials, then remove the three `BOOTSTRAP_ADMIN_*` values.
 
-The app is fully browser-local: clearing browser site data clears the helpdesk data; data does not sync across browsers, devices, or team members; channel webhooks, OAuth, outbound email, and live shared inbox features require a separately hosted backend and are intentionally unavailable in this deployment.
+Set `VITE_STORAGE_MODE=local` only for an intentionally browser-only demo; it bypasses Neon and does not share data between users.
 
 ## 12) Production Without Containers
 

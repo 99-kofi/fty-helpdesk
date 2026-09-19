@@ -79,6 +79,11 @@ class Settings(BaseSettings):
     @classmethod
     def _empty_to_default_url(cls, v, info):
         if v == "":
+            if info.field_name == "database_url":
+                # An empty DATABASE_URL must not mask a Neon/Vercel POSTGRES_URL.
+                provider_url = os.getenv("POSTGRES_URL")
+                if provider_url:
+                    return provider_url
             defaults = {
                 "database_url": "sqlite:///./fty.db",
                 "redis_url": "redis://localhost:6379/0",
