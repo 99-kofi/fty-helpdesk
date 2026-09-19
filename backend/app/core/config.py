@@ -1,4 +1,5 @@
 from pathlib import Path
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 # Absolute path: backend/.env loads no matter where uvicorn is launched from.
@@ -33,6 +34,48 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_from: str = "support@fty.local"
     smtp_use_tls: bool = True
+
+    # Vercel may inject env vars as empty strings — coerce "" → defaults
+    @field_validator(
+        "jwt_expire_minutes", "smtp_port",
+        "sla_first_response_minutes", "sla_resolution_hours", "sla_check_minutes",
+        mode="before",
+    )
+    @classmethod
+    def _empty_to_int(cls, v, info):
+        if v == "" or v is None:
+            defaults = {
+                "jwt_expire_minutes": 120,
+                "smtp_port": 587,
+                "sla_first_response_minutes": 30,
+                "sla_resolution_hours": 24,
+                "sla_check_minutes": 5,
+            }
+            return defaults.get(info.field_name, v)
+        return v
+
+    @field_validator("smtp_use_tls", mode="before")
+    @classmethod
+    def _empty_to_bool(cls, v):
+        if v == "" or v is None:
+            return True
+        if isinstance(v, str):
+            if v.lower() in ("true", "1", "yes", "on"):
+                return True
+            if v.lower() in ("false", "0", "no", "off"):
+                return False
+        return v
+
+    @field_validator("database_url", "redis_url", mode="before")
+    @classmethod
+    def _empty_to_default_url(cls, v, info):
+        if v == "":
+            defaults = {
+                "database_url": "sqlite:///./fty.db",
+                "redis_url": "redis://localhost:6379/0",
+            }
+            return defaults.get(info.field_name, v)
+        return v
 
     class Config:
         env_file = str(ENV_FILE)
