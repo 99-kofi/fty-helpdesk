@@ -10,7 +10,7 @@ ENV_FILE = Path(__file__).resolve().parent.parent.parent / ".env"
 class Settings(BaseSettings):
     # Vercel Marketplace integrations conventionally expose POSTGRES_URL. Prefer
     # DATABASE_URL when supplied, while keeping SQLite as the local-only default.
-    database_url: str = os.getenv("POSTGRES_URL", "sqlite:///./fty.db")
+    database_url: str = os.getenv("DATABASE", "sqlite:///./fty.db")
     redis_url: str = "redis://localhost:6379/0"
     jwt_secret: str = "change-me-in-production"
     jwt_algorithm: str = "HS256"
