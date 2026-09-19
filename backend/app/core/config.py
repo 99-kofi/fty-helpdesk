@@ -1,5 +1,6 @@
+import os
 from pathlib import Path
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings
 
 # Absolute path: backend/.env loads no matter where uvicorn is launched from.
@@ -7,7 +8,9 @@ ENV_FILE = Path(__file__).resolve().parent.parent.parent / ".env"
 
 
 class Settings(BaseSettings):
-    database_url: str = "sqlite:///./fty.db"
+    # Vercel Marketplace integrations conventionally expose POSTGRES_URL. Prefer
+    # DATABASE_URL when supplied, while keeping SQLite as the local-only default.
+    database_url: str = os.getenv("POSTGRES_URL", "sqlite:///./fty.db")
     redis_url: str = "redis://localhost:6379/0"
     jwt_secret: str = "change-me-in-production"
     jwt_algorithm: str = "HS256"
@@ -79,6 +82,25 @@ class Settings(BaseSettings):
             }
             return defaults.get(info.field_name, v)
         return v
+
+    @field_validator("database_url", mode="after")
+    @classmethod
+    def _postgres_driver(cls, v: str) -> str:
+        """Make standard provider URLs use the installed psycopg v3 driver."""
+        if v.startswith("postgres://"):
+            return "postgresql+psycopg://" + v.removeprefix("postgres://")
+        if v.startswith("postgresql://"):
+            return "postgresql+psycopg://" + v.removeprefix("postgresql://")
+        return v
+
+    @model_validator(mode="after")
+    def _require_persistent_vercel_database(self):
+        if os.getenv("VERCEL") and self.database_url.startswith("sqlite"):
+            raise ValueError(
+                "DATABASE_URL (or POSTGRES_URL) must point to managed PostgreSQL on Vercel; "
+                "SQLite is not persistent in Vercel Functions."
+            )
+        return self
 
     class Config:
         env_file = str(ENV_FILE)

@@ -192,7 +192,29 @@ npm run build
 
 ---
 
-## 11) Production Without Containers
+## 11) Deploy on Vercel
+
+Vercel runs the FastAPI service as a serverless function, so it needs a managed PostgreSQL database. SQLite is local-development only: Vercel Functions have a read-only filesystem and any `/tmp` data is temporary.
+
+1. Import `99-kofi/fty-helpdesk` in Vercel. Leave the project root at the repository root and use the repository's `vercel.json`.
+2. Create a managed PostgreSQL database (for example, a Vercel Marketplace PostgreSQL integration). Add its connection string to the Vercel environment as `DATABASE_URL`; a provider-supplied `POSTGRES_URL` is also recognized.
+3. Set these Production environment variables in Vercel:
+
+   ```ini
+   DATABASE_URL=postgresql://...
+   JWT_SECRET=<long-random-secret>
+   TOKEN_ENCRYPTION_KEY=<Fernet-key>
+   FRONTEND_URL=https://<your-project>.vercel.app
+   CORS_ORIGINS=["https://<your-project>.vercel.app"]
+   ALLOW_DEFAULT_ADMIN_BOOTSTRAP=false
+   ```
+
+   Add the Meta, WhatsApp, SMTP, storage, and Redis values only when those integrations are enabled. Do not set the development `admin123` bootstrap switch in Vercel.
+4. Deploy. Check `https://<your-project>.vercel.app/health`; it should return `{"status":"ok","service":"fty-helpdesk"}`. The frontend and API share the same origin, so no `VITE_API_URL` is necessary.
+
+The dashboard's live socket uses its existing polling fallback on Vercel. For SLA checks, call `POST /api/v1/automation/sla-check` from one external scheduler; serverless instances must not each run their own watchdog.
+
+## 12) Production Without Containers
 
 - **Backend:** native Python runtime (Render / Railway / Fly / VM with `uvicorn` + process manager). Set `DATABASE_URL` to managed Postgres (Neon/Supabase/RDS) and `REDIS_URL` if available.
 - **Frontend:** static hosting (Vercel / Netlify) — `npm run build` → deploy `frontend/dist`.

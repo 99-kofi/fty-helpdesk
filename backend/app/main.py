@@ -1,5 +1,6 @@
 """FTY HelpDesk API — modular monolith entrypoint."""
 import logging
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -44,6 +45,11 @@ async def lifespan(app: FastAPI):
     """In-process SLA watchdog (dev/small deploys). Prod with replicas: disable
     and hit POST /api/v1/automation/sla-check from one external cron instead."""
     global _scheduler
+    if os.getenv("VERCEL"):
+        # Function instances are short-lived and may scale horizontally. Run SLA
+        # checks from one external scheduler instead of starting one per instance.
+        yield
+        return
     try:
         from apscheduler.schedulers.asyncio import AsyncIOScheduler
         from app.core.database import SessionLocal
