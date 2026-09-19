@@ -1,2 +1,7 @@
 .vercel
-.vercel
+backend/.venv
+backend/__pycache__
+backend/.pytest_cache
+backend/*.db
+backend/*.db-*
+frontend/node_modules

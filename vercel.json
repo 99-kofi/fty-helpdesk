@@ -4,8 +4,7 @@
   "outputDirectory": "frontend/dist",
   "functions": {
     "api/index.py": {
-      "includeFiles": "backend/**",
-      "excludeFiles": "{backend/test_*.py,backend/.venv/**,backend/.pytest_cache/**}"
+      "includeFiles": "backend/**"
     }
   },
   "rewrites": [
