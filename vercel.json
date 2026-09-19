@@ -8,10 +8,10 @@
     }
   },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.py" },
-    { "source": "/webhooks/(.*)", "destination": "/api/index.py" },
-    { "source": "/ws/(.*)", "destination": "/api/index.py" },
-    { "source": "/health", "destination": "/api/index.py" },
+    { "source": "/health", "destination": "/api" },
+    { "source": "/webhooks/:path*", "destination": "/api" },
+    { "source": "/ws/:path*", "destination": "/api" },
+    { "source": "/api/:path*", "destination": "/api" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
