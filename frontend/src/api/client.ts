@@ -41,8 +41,8 @@ export function isLoggedIn(): boolean {
 export function logout(): void {
   localStorage.removeItem('fty_token');
   logoutLocal();
-  location.hash = '#/login';
-  location.reload();
+  // Use BrowserRouter history, not hash — Vercel serves /index.html for all SPA routes
+  window.location.href = '/login';
 }
 
 export type Conversation = {
