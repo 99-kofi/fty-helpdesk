@@ -121,7 +121,7 @@ cd frontend; npm run build   # outputs to frontend/dist
 ## 5) First Login & Roles
 
 - Open `http://localhost:5173` — the login screen owns the full viewport (no sidebar until you sign in).
-- First-time admin seeds itself: log in with **`admin@fty.local` / `admin123`** (auto-created on login).
+- Local development only: `ALLOW_DEFAULT_ADMIN_BOOTSTRAP=true` in `backend/.env` permits the first-run **`admin@fty.local` / `admin123`** account. This switch is disabled by default in deployments; provision an administrator through your deployment process instead.
 - **Admin** sees all nav items: Inbox, Tickets, Customers, Knowledge, Automation, Analytics, Settings.
 - **Workers** (any non-admin) see only **Inbox, Tickets, Customers**, each scoped to customers assigned to them. Knowledge/Automation/Analytics/Settings are admin-only (hidden + API 403).
 

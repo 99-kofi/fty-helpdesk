@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 120
     cors_origins: list[str] = ["http://localhost:5173"]
+    # The predictable local administrator must never be creatable on a deployed app.
+    # setup.ps1 enables this only in the generated local backend/.env.
+    allow_default_admin_bootstrap: bool = False
 
     meta_verify_token: str = "change-me"
     meta_app_secret: str = "change-me"

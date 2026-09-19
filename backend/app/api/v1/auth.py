@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.core.database import get_db
+from app.core.config import settings
 from app.core.security import create_token, hash_password, verify_password
 from app.models.user import User
 from app.schemas import LoginIn, TokenOut, UserOut
@@ -12,6 +13,9 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @router.post("/seed-admin")
 def seed_admin(db: Session = Depends(get_db)):
     """Dev-only bootstrap: creates admin@fty.local / admin123 if missing."""
+    if not settings.allow_default_admin_bootstrap:
+        # Do not expose whether a deployment has already been initialized.
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Not found")
     if db.query(User).filter_by(email="admin@fty.local").first():
         return {"ok": True, "exists": True}
     u = User(name="Admin", email="admin@fty.local", password_hash=hash_password("admin123"), role="admin")
