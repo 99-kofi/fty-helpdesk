@@ -6,8 +6,5 @@
     "api/index.py": {
       "includeFiles": "backend/**"
     }
-  },
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
+  }
 }
