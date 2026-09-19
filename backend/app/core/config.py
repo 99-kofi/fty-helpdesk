@@ -59,6 +59,29 @@ class Settings(BaseSettings):
 
     # Vercel may inject env vars as empty strings — coerce "" → defaults
     @field_validator(
+        "jwt_secret", "jwt_algorithm", "meta_verify_token", "meta_app_secret",
+        "meta_api_version", "meta_page_token", "meta_oauth_redirect_base",
+        "frontend_url", "whatsapp_token",
+        mode="before",
+    )
+    @classmethod
+    def _empty_to_str_default(cls, v, info):
+        if v == "":
+            defaults = {
+                "jwt_secret": "change-me-in-production",
+                "jwt_algorithm": "HS256",
+                "meta_verify_token": "change-me",
+                "meta_app_secret": "change-me",
+                "meta_api_version": "v21.0",
+                "meta_page_token": "change-me",
+                "meta_oauth_redirect_base": "http://localhost:8000",
+                "frontend_url": "http://localhost:5173",
+                "whatsapp_token": "change-me",
+            }
+            return defaults.get(info.field_name, v)
+        return v
+
+    @field_validator(
         "jwt_expire_minutes", "smtp_port",
         "sla_first_response_minutes", "sla_resolution_hours", "sla_check_minutes",
         mode="before",
