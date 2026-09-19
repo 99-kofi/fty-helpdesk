@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LogoStage from '../components/LogoStage';
+import { isLocalMode, localLogin } from '../api/client';
 
 export default function Login() {
   const [email, setEmail] = useState('admin@fty.local');
@@ -15,6 +16,11 @@ export default function Login() {
     setBusy(true);
     setError(null);
     try {
+      if (isLocalMode) {
+        if (!localLogin(email, password)) throw new Error('Invalid email or password');
+        nav('/');
+        return;
+      }
       await fetch(`${API_BASE}/api/v1/auth/seed-admin`, { method: 'POST' });
       const form = new URLSearchParams({ username: email, password });
       const res = await fetch(`${API_BASE}/api/v1/auth/login`, {
@@ -60,7 +66,7 @@ export default function Login() {
           <button className="g-btn" disabled={busy}>
             {busy ? 'Authenticating…' : 'Log in →'}
           </button>
-          <p className="g-hint">First run? The default admin (<b>admin@fty.local / admin123</b>) is auto-created on login. Workers sign in here too with the email + password your admin created in Settings → Teams & Workers — they only ever see customers assigned to them.</p>
+          <p className="g-hint">{isLocalMode ? <>Browser-only mode: data stays on this device. First login: <b>admin@fty.local / admin123</b>.</> : <>Workers sign in here with the email and password created by your administrator.</>}</p>
         </form>
         <p className="fty-foot">FREE THE YOUTH · SUPPORT WORKSPACE</p>
       </LogoStage>

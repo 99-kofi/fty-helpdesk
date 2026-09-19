@@ -6,8 +6,11 @@ export class ApiError extends Error {
   }
 }
 
+import { localApi, loginLocal, logoutLocal } from './local';
+
 const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') || '';
 const API = `${API_BASE}/api/v1`;
+export const isLocalMode = !API_BASE;
 
 function authHeaders(): HeadersInit {
   const t = localStorage.getItem('fty_token');
@@ -15,6 +18,7 @@ function authHeaders(): HeadersInit {
 }
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
+  if (isLocalMode) return localApi<T>(path, init);
   const res = await fetch(`${API}${path}`, { ...init, headers: { ...authHeaders(), ...(init?.headers || {}) } });
   if (res.status === 401) {
     localStorage.removeItem('fty_token');
@@ -25,12 +29,17 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+export function localLogin(email: string, password: string): boolean {
+  return loginLocal(email, password);
+}
+
 export function isLoggedIn(): boolean {
   return !!localStorage.getItem('fty_token');
 }
 
 export function logout(): void {
   localStorage.removeItem('fty_token');
+  logoutLocal();
   location.hash = '#/login';
   location.reload();
 }
