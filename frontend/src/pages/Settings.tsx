@@ -109,7 +109,7 @@ export default function Settings() {
     }
   }
 
-  const origin = typeof location !== 'undefined' ? `${location.protocol}//${location.hostname}:8000` : '';
+  const origin = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') || (typeof location !== 'undefined' ? location.origin : '');
   const embed = `<script src="${origin}/api/v1/web/widget.js" data-base="${origin}"></script>`;
 
   async function createTeam() {
