@@ -27,6 +27,10 @@ def _out(a: KnowledgeArticle) -> dict:
 
 @router.get("/knowledge")
 def list_articles(q: str | None = None, category: str | None = None, db: Session = Depends(get_db)):
+    from app.services.knowledge_seed import ensure_examples
+
+    # First real fetch seeds the example FAQs so the feature is self-explanatory.
+    ensure_examples(db)
     query = db.query(KnowledgeArticle)
     if category:
         query = query.filter(KnowledgeArticle.category == category)

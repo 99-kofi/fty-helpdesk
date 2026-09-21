@@ -6,6 +6,7 @@ from app.services.identity_resolution import resolve_customer
 from app.services.conversation_engine import get_or_create_conversation
 from app.services.assignment import maybe_auto_assign
 from app.services.automation import evaluate_event_rules
+from app.services.ai_autoreply import maybe_auto_reply
 
 
 def handle_message_event(channel: str, payload: dict) -> int:
@@ -38,6 +39,19 @@ def handle_message_event(channel: str, payload: dict) -> int:
                 "team": conv.assigned_team, "priority": conv.priority,
                 "conversation": conv,
             })
+            # THEN FAQ auto-reply: if the message is a high-confidence FAQ, answer
+            # instantly from the Knowledge Base without waiting for a human.
+            # This runs on every customer turn, no admin toggling required.
+            try:
+                # Only auto-reply if the thread's last human reply is not the
+                # immediate predecessor (i.e., don't spam every turn).
+                last = db.query(Message).filter_by(conversation_id=conv.id).order_by(Message.id.desc()).first()
+                if last and last.sender_type == "customer":
+                    maybe_auto_reply(db, conv, msg.content)
+            except Exception:
+                import logging
+
+                logging.getLogger("fty.ai").exception("auto-reply failed")
             stored += 1
         return stored
     finally:

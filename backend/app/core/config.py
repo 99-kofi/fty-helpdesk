@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     meta_oauth_redirect_base: str = "http://localhost:8000"
     frontend_url: str = "http://localhost:5173"
     token_encryption_key: str = ""  # else derived from jwt_secret
+    ai_auto_reply_enabled: bool = True
+    ai_auto_reply_scope: str = "faq"  # faq = only high-confidence FAQ_RULES; all = any intent above threshold
+    ai_auto_reply_channels: str = ""  # comma-separated allowlist, e.g. "web,email" or "" for all
     sla_first_response_minutes: int = 30
     sla_resolution_hours: int = 24
     sla_check_minutes: int = 5
@@ -99,7 +102,7 @@ class Settings(BaseSettings):
             return defaults.get(info.field_name, v)
         return v
 
-    @field_validator("smtp_use_tls", mode="before")
+    @field_validator("ai_auto_reply_enabled", "smtp_use_tls", mode="before")
     @classmethod
     def _empty_to_bool(cls, v):
         if v == "" or v is None:

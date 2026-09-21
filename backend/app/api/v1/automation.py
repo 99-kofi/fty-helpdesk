@@ -35,6 +35,9 @@ def _out(r: AutomationRule) -> dict:
 
 @router.get("/automation")
 def list_rules(db: Session = Depends(get_db)):
+    from app.services.automation_seed import ensure_presets
+
+    ensure_presets(db)
     return [_out(r) for r in db.query(AutomationRule).order_by(AutomationRule.id).all()]
 
 

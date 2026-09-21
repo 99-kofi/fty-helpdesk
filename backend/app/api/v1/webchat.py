@@ -11,6 +11,7 @@ from app.api.websocket import broadcast as ws_broadcast
 from app.core.database import get_db
 from app.models.conversation import Conversation, Message
 from app.models.customer import Customer, CustomerIdentity
+from app.services.ai_autoreply import maybe_auto_reply
 from app.services.assignment import maybe_auto_assign
 from app.services.automation import evaluate_event_rules
 
@@ -92,7 +93,7 @@ async def guest_send(guest_id: str, data: GuestMessageIn, background: Background
     db.commit()
     db.refresh(m)
 
-    # same pipeline as every other channel: classify -> team/worker -> rules -> realtime
+    # same pipeline as every other channel: classify -> team/worker -> rules -> auto-reply -> realtime
     cls = maybe_auto_assign(db, conv, text)
     evaluate_event_rules(db, "message_created", {
         "channel": "web", "text": text,
@@ -100,6 +101,14 @@ async def guest_send(guest_id: str, data: GuestMessageIn, background: Background
         "team": conv.assigned_team, "priority": conv.priority,
         "conversation": conv,
     })
+    # FAQ auto-reply: answer instantly from KB without waiting for human
+    try:
+        if db.query(Message).filter_by(conversation_id=conv.id).order_by(Message.id.desc()).first().sender_type == "customer":
+            maybe_auto_reply(db, conv, text)
+    except Exception:
+        import logging
+
+        logging.getLogger("fty.ai").exception("web auto-reply failed")
     conv.updated_at = datetime.now(timezone.utc)
     db.commit()
 
@@ -108,16 +117,6 @@ async def guest_send(guest_id: str, data: GuestMessageIn, background: Background
 
 
 @router.get("/logo.png")
-def serve_logo():
-    """Serve the FTY logo from the project root directory."""
-    import pathlib
-
-    here = pathlib.Path(__file__).resolve()
-    for parent in here.parents:
-        candidate = parent / "fty-logo.png"
-        if candidate.exists():
-            return Response(candidate.read_bytes(), media_type="image/png")
-    return Response(b"", media_type="image/png", status_code=404)
 def serve_logo():
     """Serve the FTY logo from the project root directory."""
     import pathlib
