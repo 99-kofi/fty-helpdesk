@@ -183,6 +183,68 @@ def set_status(cid: int, status: str, db: Session = Depends(get_db),
         conv.status = status
         record_history(db, conv, "status_changed", assigned_by=me.name, detail=f"{old} → {status}")
         db.commit()
+        # Option A: auto-ticket only for non-FAQ resolutions (order/payment/return/complaint)
+        if status in ("resolved", "closed"):
+            try:
+                from app.models.ticket import Ticket
+                from app.services.ai_stub import classify_faq
+
+                # Don't duplicate if already ticketed
+                if not db.query(Ticket).filter_by(conversation_id=cid).first():
+                    # Use last customer message to decide FAQ vs. trackable work
+                    last_customer = (
+                        db.query(Message)
+                        .filter_by(conversation_id=cid, sender_type="customer")
+                        .order_by(Message.id.desc())
+                        .first()
+                    )
+                    content = last_customer.content if last_customer else ""
+                    intent, conf = classify_faq(content)
+                    is_faq = conf >= 0.88 and intent in {
+                        "shipping_question",
+                        "return_policy",
+                        "payment_question",
+                        "sizing_question",
+                        "restock_question",
+                        "store_info",
+                    }
+                    # Non-FAQ or low-confidence FAQ still creates a ticket; pure high-conf FAQ does not
+                    should_ticket = not is_faq
+                    # Also treat high-priority work as ticket-worthy even if FAQ-like
+                    if conv.priority in ("high", "urgent"):
+                        should_ticket = True
+                    if should_ticket:
+                        cat_map = {
+                            "shipping_question": "shipping",
+                            "return_policy": "return",
+                            "return_request": "return",
+                            "payment_question": "payment",
+                            "payment_issue": "payment",
+                            "order_issue": "order",
+                            "complaint": "complaint",
+                            "sizing_question": "product",
+                            "restock_question": "product",
+                        }
+                        category = cat_map.get(intent, "general")
+                        # If intent was generic, fall back to team hint
+                        if category == "general" and conv.assigned_team:
+                            low = conv.assigned_team.lower()
+                            if "order" in low:
+                                category = "order"
+                            elif "support" in low:
+                                category = "support"
+                        t = Ticket(
+                            conversation_id=cid,
+                            category=category,
+                            priority=conv.priority or "normal",
+                            status="open",
+                            assigned_to=conv.assigned_agent_id,
+                        )
+                        db.add(t)
+                        db.commit()
+                        log.info("auto-ticket %s for conversation %s (intent=%s conf=%.2f)", t.id, cid, intent, conf)
+            except Exception:
+                log.exception("auto-ticket on resolve failed for conversation %s", cid)
     return {"ok": True, "status": conv.status}
 
 
