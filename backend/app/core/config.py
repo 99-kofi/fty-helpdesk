@@ -49,6 +49,7 @@ class Settings(BaseSettings):
     ai_auto_reply_enabled: bool = True
     ai_auto_reply_scope: str = "faq"  # faq = only high-confidence FAQ_RULES; all = any intent above threshold
     ai_auto_reply_channels: str = ""  # comma-separated allowlist, e.g. "web,email" or "" for all
+    ai_auto_reply_threshold: float = 0.88
     sla_first_response_minutes: int = 30
     sla_resolution_hours: int = 24
     sla_check_minutes: int = 5
@@ -102,6 +103,13 @@ class Settings(BaseSettings):
                 "sla_check_minutes": 5,
             }
             return defaults.get(info.field_name, v)
+        return v
+
+    @field_validator("ai_auto_reply_threshold", mode="before")
+    @classmethod
+    def _empty_to_float(cls, v):
+        if v == "" or v is None:
+            return 0.88
         return v
 
     @field_validator("ai_auto_reply_enabled", "smtp_use_tls", mode="before")
