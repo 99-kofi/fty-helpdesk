@@ -302,13 +302,26 @@ WIDGET_JS = r"""/* FTY webchat widget */
     if (!inp.value.trim()) return;
     var text = inp.value.trim();
     inp.value = '';
+    var tempId = 'temp-' + Date.now();
     addMsg('customer', text, true);
+    // mark the optimistic bubble so poll can ignore the echoed server copy
+    var msgsEl = box.querySelector('#fty-msgs');
+    if (msgsEl.lastElementChild) msgsEl.lastElementChild.setAttribute('data-temp', tempId);
     await ensure();
     addTyping();
-    await fetch(base + '/api/v1/web/sessions/' + guest + '/messages', {
+    var res = await fetch(base + '/api/v1/web/sessions/' + guest + '/messages', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content: text }),
     });
+    try {
+      var data = await res.json();
+      if (data && data.id) lastId = Math.max(lastId, data.id);
+    } catch(e) {}
+    // remove temp marker after server confirms
+    setTimeout(function() {
+      var el = msgsEl.querySelector('[data-temp=\"' + tempId + '\"]');
+      if (el) el.removeAttribute('data-temp');
+    }, 1500);
     setTimeout(poll, 800);
   }
 
