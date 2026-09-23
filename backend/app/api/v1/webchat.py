@@ -166,15 +166,28 @@ WIDGET_JS = r"""/* FTY webchat widget */
   /* ---- chat box ---- */
   var box = document.createElement('div');
   box.id = 'fty-chatbox';
+  var isMobile = window.innerWidth <= 480;
   box.style.cssText = [
-    'position:fixed;bottom:88px;right:24px;z-index:9999',
-    'width:360px;max-height:520px',
+    'position:fixed;z-index:9999',
+    isMobile ? 'top:0;left:0;right:0;bottom:0;width:100%;max-height:100%;border-radius:0' : 'bottom:88px;right:24px;width:360px;max-height:520px;border-radius:16px',
     'display:none;flex-direction:column',
-    'background:#0d0d1a;border-radius:16px;overflow:hidden',
+    'background:#0d0d1a;overflow:hidden',
     'box-shadow:0 24px 64px rgba(0,0,0,.75)',
     'border:1px solid rgba(255,255,255,.08)',
     'font-family:system-ui',
   ].join(';');
+  // Responsive on resize
+  window.addEventListener('resize', function() {
+    var m = window.innerWidth <= 480;
+    if (m) {
+      box.style.top='0'; box.style.left='0'; box.style.right='0'; box.style.bottom='0';
+      box.style.width='100%'; box.style.maxHeight='100%'; box.style.borderRadius='0';
+      box.style.bottom=''; box.style.right='';
+    } else {
+      box.style.top=''; box.style.left=''; box.style.right='24px'; box.style.bottom='88px';
+      box.style.width='360px'; box.style.maxHeight='520px'; box.style.borderRadius='16px';
+    }
+  });
 
   box.innerHTML = [
     '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:16px 18px;',
@@ -501,13 +514,37 @@ DEMO_HTML = """<!doctype html>
     footer a{color:#6366f1;text-decoration:none}
     footer a:hover{text-decoration:underline}
     /* RESPONSIVE */
-    @media(max-width:600px){
-      nav{padding:0 20px}
-      .hero{padding:60px 20px 40px}
-      .logo-feature{padding:0 20px 40px}
-      .logo-card{flex-direction:column;text-align:center}
-      .features,.how,.demo-section{padding-left:20px;padding-right:20px}
-      .demo-box{padding:32px 20px}
+    @media(max-width:768px){
+      nav{padding:0 16px;height:56px}
+      .nav-logo img{width:32px;height:32px}
+      .nav-logo span{font-size:16px}
+      .nav-badge{display:none}
+      .nav-cta{padding:7px 14px;font-size:13px}
+      .hero{padding:48px 20px 32px}
+      .hero-eyebrow{font-size:11px;padding:5px 12px}
+      h1.hero-title{font-size:clamp(28px,8vw,36px)}
+      .hero-sub{font-size:15px;padding:0 8px}
+      .btn-primary,.btn-ghost{padding:12px 20px;font-size:14px;width:100%;max-width:280px}
+      .hero-actions{flex-direction:column;align-items:center}
+      .logo-feature{padding:0 20px 32px}
+      .logo-card{flex-direction:column;text-align:center;padding:20px}
+      .logo-card img{width:64px;height:64px}
+      .features,.how,.demo-section{padding-left:16px;padding-right:16px}
+      .section-label h2{font-size:24px}
+      .feature-grid{grid-template-columns:1fr;gap:14px}
+      .feature-card{padding:20px 16px}
+      .steps{flex-direction:column;align-items:center}
+      .step{max-width:100%;width:100%}
+      .demo-box{padding:24px 16px;border-radius:16px}
+      .inline-form{flex-direction:column;align-items:stretch}
+      .inline-form input{width:100%}
+      .send-arrow{width:100%}
+    }
+    @media(max-width:480px){
+      .hero{padding:32px 16px 24px}
+      h1.hero-title{font-size:26px;letter-spacing:-0.8px}
+      .demo-box{padding:20px 14px}
+      .inline-form input{font-size:16px} /* prevents iOS zoom */
     }
   </style>
 </head>
