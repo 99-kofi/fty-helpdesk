@@ -44,6 +44,8 @@ class Settings(BaseSettings):
     meta_oauth_redirect_base: str = "http://localhost:8000"
     frontend_url: str = "http://localhost:5173"
     token_encryption_key: str = ""  # else derived from jwt_secret
+    hf_token: str = ""  # Hugging Face Inference token for KB-grounded LLM (set as HF_TOKEN on Vercel)
+    hf_model: str = "deepseek-ai/DeepSeek-V4.1-Flash"
     ai_auto_reply_enabled: bool = True
     ai_auto_reply_scope: str = "faq"  # faq = only high-confidence FAQ_RULES; all = any intent above threshold
     ai_auto_reply_channels: str = ""  # comma-separated allowlist, e.g. "web,email" or "" for all

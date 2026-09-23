@@ -74,12 +74,28 @@ def maybe_auto_reply(db: Session, conv: Conversation, content: str) -> Message |
     article = _pick_article(db, content, intent)
     if not article:
         return None
+    # Prefer a KB-grounded LLM rewrite when HF_TOKEN is configured; fall back to the article verbatim.
     body = article.body.strip()
-    # Keep replies concise and attributable.
-    reply = body[:900]
-    if len(body) > 900:
-        reply += "…"
-    reply += "\n\n— Answered instantly from FTY Knowledge Base. An agent will follow up if you need more help."
+    grounded = None
+    try:
+        from app.services.ai_llm import grounded_answer
+
+        grounded = grounded_answer(
+            content,
+            [{"title": article.title, "body": article.body, "category": article.category}],
+        )
+    except Exception:
+        grounded = None
+    if grounded:
+        reply = grounded
+        # Ensure attribution
+        if "FTY Knowledge Base" not in reply and "FTY HelpDesk" not in reply:
+            reply += "\n\n— Answered from FTY Knowledge Base."
+    else:
+        reply = body[:900]
+        if len(body) > 900:
+            reply += "…"
+        reply += "\n\n— Answered instantly from FTY Knowledge Base. An agent will follow up if you need more help."
     msg = Message(conversation_id=conv.id, sender_type="ai", sender_id="fty-ai", content=reply)
     db.add(msg)
     # Keep the conversation open but mark that AI already responded; human can still claim it.
