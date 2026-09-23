@@ -28,6 +28,9 @@ def _channel_allowed(channel: str) -> bool:
 
 
 def _pick_article(db: Session, content: str, intent: str) -> KnowledgeArticle | None:
+    from app.services.knowledge_seed import ensure_examples
+
+    ensure_examples(db)
     text = content.lower()
     # Direct keyword hit first.
     q = db.query(KnowledgeArticle)

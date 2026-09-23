@@ -50,6 +50,9 @@ def _keywords(text: str) -> list[str]:
 
 
 def suggest_reply(db: Session, content: str) -> dict:
+    from app.services.knowledge_seed import ensure_examples
+
+    ensure_examples(db)
     intent, confidence = classify_faq(content)
     hits: list[KnowledgeArticle] = []
     for w in _keywords(content):

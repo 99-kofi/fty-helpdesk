@@ -6,7 +6,7 @@ from app.core.database import get_db
 from app.core.deps import get_current_user, require_role
 from app.models.knowledge import KnowledgeArticle
 
-router = APIRouter(tags=["knowledge"], dependencies=[Depends(require_role("admin"))])
+router = APIRouter(tags=["knowledge"], dependencies=[Depends(get_current_user)])
 
 
 class ArticleIn(BaseModel):
