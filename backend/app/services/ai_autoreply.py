@@ -63,16 +63,25 @@ def maybe_auto_reply(db: Session, conv: Conversation, content: str) -> Message |
         return None
     intent, confidence = classify_faq(content)
     if confidence < settings.ai_auto_reply_threshold:
+        log.info("ai skipped conversation %s: low confidence %.2f for %s — requires human review", conv.id, confidence, intent)
         return None
     if settings.ai_auto_reply_scope == "faq":
         from app.services.ai_stub import FAQ_RULES
 
         if intent not in {r[0] for r in FAQ_RULES}:
+            log.info("ai skipped conversation %s: intent %s not in KB-scope — sales review required", conv.id, intent)
             return None
-    # Never auto-reply to an already-human-handled thread in this turn;
-    # the caller ensures this is the first customer message since last agent reply.
+    # Strict KB-only: require a strong KB match, otherwise escalate to sales
     article = _pick_article(db, content, intent)
     if not article:
+        log.info("ai skipped conversation %s: no KB article for %s — sales review required", conv.id, intent)
+        return None
+    # Verify the article actually covers the question (keyword overlap)
+    q_words = {w for w in content.lower().split() if len(w) >= 4}
+    a_hay = f"{article.title} {article.body}".lower()
+    overlap = sum(1 for w in q_words if w in a_hay)
+    if overlap == 0 and intent not in ("store_info", "shipping_question"):
+        log.info("ai skipped conversation %s: KB article '%s' has no keyword overlap — sales review", conv.id, article.title)
         return None
     # Prefer a KB-grounded LLM that has LEARNED from the full KB; fall back to article verbatim.
     body = article.body.strip()

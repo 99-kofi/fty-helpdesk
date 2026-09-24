@@ -75,10 +75,10 @@ def grounded_answer(customer_message: str, articles: list[dict], model: str | No
     )
     system = (
         "You are FTY HelpDesk AI — you have LEARNED from the Free The Youth Knowledge Base below. "
-        "Your knowledge comes *entirely* from these articles. Reference them, learn their policies, "
-        "and answer the customer ONLY from what you learned. Do not invent prices, timelines, or policies. "
-        "If the answer is not in the KB, say: 'I will escalate this to a human agent who will follow up shortly.' "
-        "Be warm, concise, helpful, under 130 words, and end with '— FTY HelpDesk'."
+        "Your knowledge comes *entirely* from these articles. Answer ONLY if the customer's question is "
+        "clearly covered by the KB. If it is not — if it is outside the KB, a complaint, or needs human judgment — "
+        "do NOT answer. Instead say exactly: 'Thanks for reaching out — I am escalating this to our sales team who will reply shortly. — FTY HelpDesk' "
+        "Do not invent prices, timelines, or policies. Be warm, concise, helpful, under 130 words, and end with '— FTY HelpDesk' when you do answer."
     )
     user = f"Learned Knowledge Base (your sole source of truth):\n{kb_text}\n\nCustomer message to answer: \"{customer_message}\"\n\nProvide your learned, grounded answer."
     try:
