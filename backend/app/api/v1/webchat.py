@@ -265,6 +265,17 @@ WIDGET_JS = r"""/* FTY webchat widget */
   async function poll() {
     if (!guest) return;
     var r = await fetch(base + '/api/v1/web/sessions/' + guest + '/messages?after=' + lastId);
+    if (r.status === 404) {
+      // Session was wiped (DB reset / moved to Neon) — start fresh
+      localStorage.removeItem('fty_guest');
+      guest = null; lastId = 0;
+      await ensure();
+      // Clear old bubbles and show fresh welcome
+      var msgsEl = box.querySelector('#fty-msgs');
+      msgsEl.innerHTML = '';
+      addMsg('agent', '\uD83D\uDC4B Hey! Welcome to Free The Youth support. How can we help you today?', true);
+      return;
+    }
     if (!r.ok) return;
     var j = await r.json();
     removeTyping();
@@ -304,7 +315,6 @@ WIDGET_JS = r"""/* FTY webchat widget */
     inp.value = '';
     var tempId = 'temp-' + Date.now();
     addMsg('customer', text, true);
-    // mark the optimistic bubble so poll can ignore the echoed server copy
     var msgsEl = box.querySelector('#fty-msgs');
     if (msgsEl.lastElementChild) msgsEl.lastElementChild.setAttribute('data-temp', tempId);
     await ensure();
@@ -313,11 +323,20 @@ WIDGET_JS = r"""/* FTY webchat widget */
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content: text }),
     });
+    if (res.status === 404) {
+      // Session gone — clear and retry once
+      localStorage.removeItem('fty_guest');
+      guest = null;
+      await ensure();
+      res = await fetch(base + '/api/v1/web/sessions/' + guest + '/messages', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: text }),
+      });
+    }
     try {
       var data = await res.json();
       if (data && data.id) lastId = Math.max(lastId, data.id);
     } catch(e) {}
-    // remove temp marker after server confirms
     setTimeout(function() {
       var el = msgsEl.querySelector('[data-temp=\"' + tempId + '\"]');
       if (el) el.removeAttribute('data-temp');
@@ -673,16 +692,26 @@ DEMO_HTML = """<!doctype html>
     inp.disabled = true;
     try {
       await ensureQuick();
-      await fetch('/api/v1/web/sessions/' + _quickGuest + '/messages', {
+      var res = await fetch('/api/v1/web/sessions/' + _quickGuest + '/messages', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({content: text})
       });
+      if (res.status === 404) {
+        localStorage.removeItem('fty_guest');
+        _quickGuest = null;
+        await ensureQuick();
+        res = await fetch('/api/v1/web/sessions/' + _quickGuest + '/messages', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({content: text})
+        });
+      }
+      if (!res.ok) throw new Error('send failed');
       inp.value = '';
       var fb = document.getElementById('send-feedback');
       fb.classList.add('show');
       setTimeout(function(){fb.classList.remove('show');}, 4000);
     } catch(e) {
-      alert('Could not send \\u2014 is the backend running?');
+      alert('Could not send — is the backend running?');
     } finally {
       inp.disabled = false;
       inp.focus();
