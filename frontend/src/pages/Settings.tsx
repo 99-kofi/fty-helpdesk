@@ -40,7 +40,8 @@ export default function Settings() {
   const [memberPick, setMemberPick] = useState<Record<number, string>>({});
   const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'agent' });
   const [resetPw, setResetPw] = useState<Record<number, string>>({});
-  const [tab, setTab] = useState<'channels' | 'teams' | 'capacity'>('channels');
+  const [tab, setTab] = useState<'channels' | 'teams' | 'capacity' | 'maintenance'>('channels');
+  const [resetting, setResetting] = useState(false);
   const [params, setParams] = useSearchParams();
   const { toast, node } = useToast();
 
@@ -185,6 +186,20 @@ export default function Settings() {
     }
   }
 
+  async function clearInbox() {
+    if (!confirm('Clear all inbox data? This will delete all customers, conversations, messages, and tickets for a fresh test. Users, teams, and Knowledge Base are kept. This cannot be undone.')) return;
+    if (!confirm('Are you absolutely sure? Type OK to proceed — this will wipe the inbox.')) return;
+    setResetting(true);
+    try {
+      const res = await api<{ ok: boolean; message: string }>('/admin/reset-inbox', { method: 'POST' });
+      toast(`✅ ${res.message || 'Inbox cleared — fresh start ready'}`);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Reset failed (admin only)');
+    } finally {
+      setResetting(false);
+    }
+  }
+
   return (
     <div>
       {node}
@@ -216,6 +231,15 @@ export default function Settings() {
         >
           <span>🟢</span> Availability & Capacity
         </button>
+        {isAdmin && (
+          <button
+            type="button"
+            className={`settings-tab ${tab === 'maintenance' ? 'active' : ''}`}
+            onClick={() => setTab('maintenance')}
+          >
+            <span>🧹</span> Maintenance
+          </button>
+        )}
       </div>
 
       {err && <ErrorBanner message={err} onRetry={load} />}
@@ -405,6 +429,33 @@ export default function Settings() {
               </div>
             </div>
           )}
+
+          {isAdmin && (
+            <div className="card" style={{ marginBottom: 16, borderColor: 'rgba(248,113,113,0.3)', background: 'rgba(248,113,113,0.04)' }}>
+              <b>🧹 Maintenance — Fresh Start for Testing</b>
+              <p className="small muted" style={{ margin: '4px 0 10px' }}>Clear all inbox test data (customers, conversations, messages, tickets, history) for a clean test. Keeps users, teams, and Knowledge Base. Use before demos.</p>
+              <button className="btn" style={{ background: 'rgba(248,113,113,0.9)', borderColor: 'rgba(248,113,113,0.9)', color: '#fff' }} onClick={clearInbox} disabled={resetting}>
+                {resetting ? 'Clearing…' : 'Clear Inbox — Fresh Start'}
+              </button>
+            </div>
+          )}
+      {/* Tab 4: Maintenance (admin) */}
+      {!loading && tab === 'maintenance' && isAdmin && (
+        <div>
+          <div className="settings-section-header">
+            <h2>Maintenance & Testing</h2>
+            <p className="muted small">Reset test data and verify system health.</p>
+          </div>
+          <div className="card" style={{ borderColor: 'rgba(248,113,113,0.35)' }}>
+            <b>🧹 Clear Inbox — Fresh Start</b>
+            <p className="small muted" style={{ margin: '6px 0 12px' }}>Removes all customers, conversations, messages, tickets, and history for a clean test run. <b>Preserves</b> users, teams, and Knowledge Base. Useful before demos.</p>
+            <button className="btn" style={{ background: '#ef4444', borderColor: '#ef4444', color: '#fff' }} onClick={clearInbox} disabled={resetting}>
+              {resetting ? 'Clearing…' : 'Clear All Inbox Data'}
+            </button>
+            <p className="small muted" style={{ marginTop: 8 }}>Local alternative: <code>powershell -NoProfile -ExecutionPolicy Bypass -File scripts/reset-dev.ps1</code></p>
+          </div>
+        </div>
+      )}
 
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
             <table className="table">

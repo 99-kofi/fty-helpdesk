@@ -42,3 +42,19 @@ def ai_suggest(content: str, db: Session = Depends(get_db)):
         base["llm_draft"] = draft
         base["llm_model"] = __import__("os").environ.get("HF_MODEL", "deepseek-ai/DeepSeek-V4.1-Flash")
     return base
+
+
+@router.post("/admin/reset-inbox", tags=["admin"], dependencies=[Depends(require_role("admin"))])
+def reset_inbox(db: Session = Depends(get_db)):
+    """Admin: clear all test/customer data for a fresh start. Keeps users, teams, KB, and automation rules."""
+    from app.models.customer import Customer, CustomerIdentity
+    from app.models.conversation import Conversation, Message, Attachment
+    from app.models.ticket import Ticket, TicketEvent
+    from app.models.assignment import AssignmentHistory
+    from app.models.audit import AuditLog
+
+    # Order matters due to FK constraints
+    for model in [Attachment, Message, TicketEvent, AssignmentHistory, AuditLog, Ticket, Conversation, CustomerIdentity, Customer]:
+        db.query(model).delete()
+    db.commit()
+    return {"ok": True, "message": "Inbox cleared — customers, conversations, messages, tickets, and history removed. Users, teams, and Knowledge Base preserved."}
