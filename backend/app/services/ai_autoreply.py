@@ -74,16 +74,18 @@ def maybe_auto_reply(db: Session, conv: Conversation, content: str) -> Message |
     article = _pick_article(db, content, intent)
     if not article:
         return None
-    # Prefer a KB-grounded LLM rewrite when HF_TOKEN is configured; fall back to the article verbatim.
+    # Prefer a KB-grounded LLM that has LEARNED from the full KB; fall back to article verbatim.
     body = article.body.strip()
     grounded = None
     try:
-        from app.services.ai_llm import grounded_answer
+        from app.services.ai_llm import grounded_answer, _retrieve_kb_articles
 
-        grounded = grounded_answer(
-            content,
-            [{"title": article.title, "body": article.body, "category": article.category}],
-        )
+        # Let the LLM learn from the most relevant KB articles for this message
+        learned_articles = _retrieve_kb_articles(db, content, limit=3)
+        # Ensure the primary article is included
+        if not any(a['title'] == article.title for a in learned_articles):
+            learned_articles = [{"title": article.title, "body": article.body, "category": article.category}] + learned_articles[:2]
+        grounded = grounded_answer(content, learned_articles, db=db)
     except Exception:
         grounded = None
     if grounded:
