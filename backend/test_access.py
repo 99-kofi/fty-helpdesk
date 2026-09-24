@@ -9,12 +9,12 @@ c = TestClient(app)
 ADMIN_PAGES = [
     "/api/v1/channels",
     "/api/v1/teams",
-    "/api/v1/knowledge",
-    "/api/v1/knowledge/categories",
     "/api/v1/automation",
     "/api/v1/analytics/overview",
     "/api/v1/analytics/summary",
 ]
+# Knowledge is readable by all authenticated users (for AI suggestions + inbox)
+READABLE_KB = ["/api/v1/knowledge", "/api/v1/knowledge/categories"]
 
 
 def _admin():
@@ -40,6 +40,10 @@ def test_admin_pages_forbidden_for_workers():
         assert c.get(path, headers=w).status_code == 403, path
     for path in ADMIN_PAGES:
         assert c.get(path, headers=h).status_code == 200, path
+    # KB is readable by workers (for AI) — writes still admin-only
+    for path in READABLE_KB:
+        assert c.get(path, headers=w).status_code == 200, path
+        assert c.post("/api/v1/knowledge", json={"category": "Test", "title": "t", "body": "b"}, headers=w).status_code == 403
 
 
 def test_worker_mutations_restricted():
