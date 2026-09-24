@@ -75,12 +75,14 @@ def grounded_answer(customer_message: str, articles: list[dict], model: str | No
     )
     system = (
         "You are FTY HelpDesk AI — you have LEARNED from the Free The Youth Knowledge Base below. "
-        "Your knowledge comes *entirely* from these articles. Answer ONLY if the customer's question is "
-        "clearly covered by the KB. If it is not — if it is outside the KB, a complaint, or needs human judgment — "
-        "do NOT answer. Instead say exactly: 'Thanks for reaching out — I am escalating this to our sales team who will reply shortly. — FTY HelpDesk' "
-        "Do not invent prices, timelines, or policies. Be warm, concise, helpful, under 130 words, and end with '— FTY HelpDesk' when you do answer."
+        "Your job is to find CONTEXTUAL SIMILARITY: even if the customer's wording is not exact, "
+        "look for the closest meaning in the KB and answer from that context. For example, 'how long until it gets here' "
+        "is similar to 'delivery times', 'can I send it back' is similar to 'return policy'. "
+        "Answer from the most similar KB context you find. Only if there is truly no similar context at all — "
+        "or the request needs human judgment (complaint, custom order, fraud) — say: 'Thanks for reaching out — I am escalating this to our sales team who will reply shortly. — FTY HelpDesk' "
+        "Do not invent prices or timelines outside the KB, but do infer similar meanings. Be warm, concise, under 130 words, end with '— FTY HelpDesk' when you answer."
     )
-    user = f"Learned Knowledge Base (your sole source of truth):\n{kb_text}\n\nCustomer message to answer: \"{customer_message}\"\n\nProvide your learned, grounded answer."
+    user = f"Learned Knowledge Base (your sole source of truth — find similar context even for imprecise phrasing):\n{kb_text}\n\nCustomer message: \"{customer_message}\"\n\nFind the most similar KB context and answer helpfully."
     try:
         resp = client.chat.completions.create(
             model=model or os.environ.get("HF_MODEL", "deepseek-ai/DeepSeek-V4.1-Flash"),

@@ -71,18 +71,24 @@ def maybe_auto_reply(db: Session, conv: Conversation, content: str) -> Message |
         if intent not in {r[0] for r in FAQ_RULES}:
             log.info("ai skipped conversation %s: intent %s not in KB-scope — sales review required", conv.id, intent)
             return None
-    # Strict KB-only: require a strong KB match, otherwise escalate to sales
+    # Similar-match allowed: let HF find context similarity even for imprecise phrasing.
+    # Only skip if truly no KB article at all.
     article = _pick_article(db, content, intent)
     if not article:
         log.info("ai skipped conversation %s: no KB article for %s — sales review required", conv.id, intent)
         return None
-    # Verify the article actually covers the question (keyword overlap)
+    # For similar questions, we rely on the LLM's similarity search (not strict keyword overlap).
+    # Keep a light overlap check only for completely unrelated messages.
     q_words = {w for w in content.lower().split() if len(w) >= 4}
     a_hay = f"{article.title} {article.body}".lower()
     overlap = sum(1 for w in q_words if w in a_hay)
-    if overlap == 0 and intent not in ("store_info", "shipping_question"):
-        log.info("ai skipped conversation %s: KB article '%s' has no keyword overlap — sales review", conv.id, article.title)
-        return None
+    if overlap == 0 and len(q_words) > 3:
+        # Let HF try similarity first; only skip if HF is not configured and no overlap
+        from app.services.ai_llm import _hf_client
+
+        if _hf_client() is None and intent not in ("store_info", "shipping_question", "return_policy"):
+            log.info("ai skipped conversation %s: no overlap and no HF for similarity — sales review", conv.id)
+            return None
     # Prefer a KB-grounded LLM that has LEARNED from the full KB; fall back to article verbatim.
     body = article.body.strip()
     grounded = None
