@@ -27,6 +27,18 @@ def analytics_summary(db: Session = Depends(get_db)):
 
 @router.post("/ai/suggest", tags=["ai"])
 def ai_suggest(content: str, db: Session = Depends(get_db)):
-    """Phase-4 stub: keyword retrieval from knowledge base (no LLM yet)."""
+    """KB-grounded suggest: retrieval + DeepSeek rewrite when HF_TOKEN is set (webchat + inbox)."""
+    from app.services.ai_llm import grounded_answer
     from app.services.ai_stub import suggest_reply
-    return suggest_reply(db, content)
+
+    base = suggest_reply(db, content)
+    # If HF is configured, add a KB-grounded LLM draft (same grounding as web auto-reply)
+    articles = [{"title": s["title"], "body": s["body"], "category": "General"} for s in base.get("suggestions", [])]
+    # Fall back to letting the LLM learn directly from the KB if no suggestions
+    draft = grounded_answer(content, articles, db=db) if articles else None
+    if not draft and not articles:
+        draft = grounded_answer(content, [], db=db)
+    if draft:
+        base["llm_draft"] = draft
+        base["llm_model"] = __import__("os").environ.get("HF_MODEL", "deepseek-ai/DeepSeek-V4.1-Flash")
+    return base

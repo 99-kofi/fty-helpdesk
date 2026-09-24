@@ -478,12 +478,22 @@ export default function Inbox() {
                 ))}
                 {ai && (
                   <div className="ai-box">
-                    <b>🤖 AI suggestion</b> <span className="small muted">(intent: {ai.intent}, confidence: {Math.round(ai.confidence * 100)}%{ai.requires_human ? ' — human review required' : ''})</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <b>🤖 AI suggestion</b>
+                      <span className="small muted">intent: {ai.intent} • {Math.round(ai.confidence * 100)}%{ai.requires_human ? ' • human review' : ' • KB-grounded'}</span>
+                    </div>
+                    {ai.llm_draft && (
+                      <div style={{ marginTop: 8, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: 10 }}>
+                        <div className="small" style={{ color: '#a5b4fc', marginBottom: 4 }}>✨ KB-grounded draft {ai.llm_model ? `(${ai.llm_model})` : ''} — from webchat + inbox</div>
+                        <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{ai.llm_draft}</div>
+                        <button className="btn btn-primary" style={{ marginTop: 8, padding: '6px 12px' }} onClick={() => setDraft(ai.llm_draft!)}>Use this reply</button>
+                      </div>
+                    )}
                     {ai.suggestions.map((s, i) => (
-                      <div key={i} style={{ marginTop: 6 }}>
+                      <div key={i} style={{ marginTop: 8, paddingTop: 8, borderTop: ai.llm_draft ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
                         <b>{s.title}</b>
                         <p style={{ margin: '4px 0' }}>{s.body}</p>
-                        <button className="btn" style={{ padding: '4px 10px' }} onClick={() => setDraft(s.body)}>Use as reply</button>
+                        <button className="btn" style={{ padding: '4px 10px' }} onClick={() => setDraft(s.body)}>Use article text</button>
                       </div>
                     ))}
                   </div>

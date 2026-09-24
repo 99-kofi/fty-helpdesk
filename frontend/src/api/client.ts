@@ -60,8 +60,9 @@ export type Ticket = {
 export type Customer = { id: number; name: string | null; email: string | null; phone: string | null };
 export type Agent = { id: number; name: string; email: string; role: string; team: string | null; availability?: string; max_active?: number };
 export type AiSuggestion = {
-  intent: string; confidence: number; requires_human: boolean;
+  intent: string; confidence: number; requires_human: boolean; auto_reply_eligible?: boolean;
   suggestions: { title: string; body: string }[];
+  llm_draft?: string; llm_model?: string;
 };
 export type TeamMember = { user_id: number; name: string; availability: string; active: number };
 export type Team = { id: number; name: string; description: string | null; members: TeamMember[] };
