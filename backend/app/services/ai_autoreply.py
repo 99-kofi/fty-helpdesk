@@ -62,20 +62,28 @@ def maybe_auto_reply(db: Session, conv: Conversation, content: str) -> Message |
     if not _channel_allowed(conv.channel):
         return None
     intent, confidence = classify_faq(content)
-    if confidence < settings.ai_auto_reply_threshold:
-        log.info("ai skipped conversation %s: low confidence %.2f for %s — requires human review", conv.id, confidence, intent)
-        return None
+    # For general_question with low confidence, still try KB similarity via LLM before giving up
+    is_low_faq = confidence < settings.ai_auto_reply_threshold
+    is_non_faq = False
     if settings.ai_auto_reply_scope == "faq":
         from app.services.ai_stub import FAQ_RULES
 
-        if intent not in {r[0] for r in FAQ_RULES}:
+        is_non_faq = intent not in {r[0] for r in FAQ_RULES}
+        # Don't immediately skip general_question — let KB similarity decide
+        if is_non_faq and intent != "general_question":
             log.info("ai skipped conversation %s: intent %s not in KB-scope — sales review required", conv.id, intent)
             return None
-    # Similar-match allowed: let HF find context similarity even for imprecise phrasing.
-    # Only skip if truly no KB article at all.
+    # Try to find a KB article even for low-confidence cases — LLM will find similarity
     article = _pick_article(db, content, intent)
     if not article:
-        log.info("ai skipped conversation %s: no KB article for %s — sales review required", conv.id, intent)
+        if is_low_faq or is_non_faq:
+            log.debug("ai no KB article for %s (%.2f) — will try LLM similarity", intent, confidence)
+        else:
+            log.info("ai skipped conversation %s: no KB article for %s — sales review required", conv.id, intent)
+            return None
+    # If low confidence but we have an article, let HF similarity decide — don't block here
+    if is_low_faq and not article:
+        log.info("ai skipped conversation %s: low confidence %.2f for %s — requires human review", conv.id, confidence, intent)
         return None
     # For similar questions, we rely on the LLM's similarity search (not strict keyword overlap).
     # Keep a light overlap check only for completely unrelated messages.
@@ -90,6 +98,22 @@ def maybe_auto_reply(db: Session, conv: Conversation, content: str) -> Message |
             log.info("ai skipped conversation %s: no overlap and no HF for similarity — sales review", conv.id)
             return None
     # Prefer a KB-grounded LLM that has LEARNED from the full KB; fall back to article verbatim.
+    # If initial pick failed but we have low-confidence general, try LLM similarity retrieval
+    if not article:
+        try:
+            from app.services.ai_llm import _retrieve_kb_articles as _retrieve
+
+            learned_fallback = _retrieve(db, content, limit=3)
+            if learned_fallback:
+                article = type('obj', (object,), learned_fallback[0])()
+                article.title = learned_fallback[0]['title']
+                article.body = learned_fallback[0]['body']
+                article.category = learned_fallback[0]['category']
+                log.info("ai recovered via similarity search for %s -> %s", intent, article.title)
+            else:
+                return None
+        except Exception:
+            return None
     body = article.body.strip()
     grounded = None
     try:
